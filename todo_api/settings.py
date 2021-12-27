@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'profiles.apps.ProfilesConfig',
     'authentication',
     'rest_framework',
+    'rest_framework_swagger',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -84,6 +86,7 @@ REST_FRAMEWORK = {
     ),
     'EXCEPTION_HANDLER': 'todo_api.exceptions.core_exception_handler',
     'NON_FIELD_ERRORS_KEY': 'error',
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema'
 }
 
 # Database
@@ -123,6 +126,15 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+SWAGGER_SETTINGS = {
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'in': 'header',
+            'name': 'Authorization'
+        }
+    },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/

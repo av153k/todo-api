@@ -11,7 +11,7 @@ from django.db.models import Q
 
 
 class JwtAuthentication(authentication.BaseAuthentication):
-    authentication_header_prefix = 'Token'
+    authentication_header_prefix = 'Bearer'
 
     def authenticate(self, request):
         request.user = None

@@ -1,13 +1,14 @@
+from dataclasses import field
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 from .renderers import UserJsonRenderer
 from .serializers import (RegistrationSerializer,
                           LoginSerializer, UserSerializer)
-
 
 class RegistrationApiView(APIView):
     permission_classes = (AllowAny,)
@@ -29,10 +30,16 @@ class LoginApiView(APIView):
     renderer_classes = (UserJsonRenderer,)
     serializer_class = LoginSerializer
 
+    login_param = openapi.Schema(type=openapi.TYPE_OBJECT,properties={
+        'user': openapi.Schema(type=openapi.TYPE_OBJECT),
+    })
+
+    @swagger_auto_schema(operation_description="Login and get a JWT token", request_body=login_param)
     def post(self, request):
         user = request.data.get('user', {})
         serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
+        print(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

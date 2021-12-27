@@ -48,6 +48,9 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampsModel):
     is_staff = models.BooleanField(default=False)
     username = models.CharField(max_length=50, unique=True)
     email = models.EmailField(max_length=200, db_index=True, unique=True)
+    phone = models.TextField(max_length=11, blank=True)
+    profile_picture = models.URLField(
+        default='https://static.productionready.io/images/smiley-cyrus.jpg')
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(auto_now_add=True)
     objects = UserManager()
@@ -62,6 +65,12 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampsModel):
     def token(self):
         return self._generate_jwt_token()
 
+    def get_profile_picture(self):
+        if self.profile_picture:
+            return self.profile_picture
+
+        return 'https://static.productionready.io/images/smiley-cyrus.jpg'
+
     def _generate_jwt_token(self):
         dt = datetime.now() + timedelta(days=30)
         token = jwt.encode({
@@ -69,4 +78,4 @@ class User(AbstractBaseUser, PermissionsMixin, TimeStampsModel):
             "exp": int(dt.timestamp())
         }, settings.SECRET_KEY, algorithm='HS256')
 
-        return token.decode('utf-8')
+        return token

@@ -22,6 +22,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.CharField(max_length=255, required=False)
+    phone = serializers.CharField(max_length=255, required=False)
+    profile_picture = serializers.CharField(max_length=255, required=False)
+    user_id = serializers.IntegerField( required=False)
     username = serializers.CharField(max_length=255, required=False)
     first_name = serializers.CharField(max_length=200, required=False)
     last_name = serializers.CharField(max_length=200, required=False)
@@ -31,11 +34,12 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         username = data.get('username', None)
         email = data.get('email', None)
+        phone = data.get('phone', None)
         password = data.get('password', None)
 
-        if (username is None and email is None):
+        if (username is None and email is None and phone is None):
             raise serializers.ValidationError(
-                'Email/Username is required to log in')
+                'Email/Username/Phone is required to log in')
 
         if password is None:
             raise serializers.ValidationError(
@@ -46,6 +50,8 @@ class LoginSerializer(serializers.Serializer):
             user = authenticate(identifier=username, password=password)
         elif email is not None:
             user = authenticate(identifier=email, password=password)
+        elif phone is not None:
+            user = authenticate(identifier=phone, password=password)
 
         if user is None:
             raise serializers.ValidationError(
@@ -55,12 +61,16 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 'This user has been deactivated.')
 
+        print(user.pk)
+
         return {
             'user_id': user.pk,
             'username': user.username,
             'email': user.email,
             'first_name': user.first_name,
             'last_name': user.last_name,
+            'phone': user.phone,
+            'profile_picture': user.get_profile_picture(),
             'token': user.token,
         }
 
@@ -68,20 +78,18 @@ class LoginSerializer(serializers.Serializer):
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         max_length=128, min_length=8, write_only=True)
-    profile = ProfileSerializer(write_only=True)
-    phone = serializers.CharField(source='profile.phone', read_only=True)
-    profile_picture = serializers.CharField(
-        source='profile.profile_picture', read_only=True)
+    phone = serializers.CharField( read_only=True)
+    # profile_picture = serializers.CharField(
+    #     source='profile_picture', read_only=True)
 
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name',
-                  'password', 'email', 'profile', 'phone', 'profile_picture', 'token')
+                  'password', 'email', 'phone', 'token')
         read_only_fields = ['token']
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
-        profile_data = validated_data.pop('profile', {})
 
         for key, value in validated_data.items():
             setattr(instance, key, value)
@@ -90,10 +98,5 @@ class UserSerializer(serializers.ModelSerializer):
             instance.set_password(password)
 
         instance.save()
-
-        for key, value in profile_data:
-            setattr(instance.profile, key, value)
-
-        instance.profile.save()
 
         return instance
